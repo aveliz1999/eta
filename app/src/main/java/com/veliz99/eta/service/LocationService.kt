@@ -1,6 +1,8 @@
 package com.veliz99.eta.service
 
 import android.app.*
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -12,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.SetOptions
 import com.veliz99.eta.MainActivity
 import com.veliz99.eta.R
 
@@ -47,26 +50,9 @@ class LocationService : Service() {
             .collection("etas")
             .document().id
 
-        locationCallback = object: LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                super.onLocationResult(locationResult)
-                if(locationResult == null) {
-                    return
-                }
-                val location = locationResult.lastLocation
-                if(currentLocation.latitude != location.latitude || currentLocation.longitude != location.longitude) {
-                    currentLocation = location
-                    FirebaseFirestore.getInstance()
-                        .collection("etas")
-                        .document(documentId)
-                        .set(mapOf(
-                            "creator" to FirebaseAuth.getInstance().currentUser!!.uid,
-                            "location" to GeoPoint(location.latitude, location.longitude),
-                            "updated" to FieldValue.serverTimestamp()
-                        ))
-                }
-            }
-        }
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText(documentId, documentId)
+        clipboard.setPrimaryClip(clip)
 
         locationRequest = LocationRequest().apply {
             interval = 5000
@@ -81,8 +67,6 @@ class LocationService : Service() {
             channel.description = CHANNEL_DESCRIPTION
             notificationManager.createNotificationChannel(channel)
         }
-
-        requestLocationUpdates()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -94,8 +78,34 @@ class LocationService : Service() {
             locationClient.removeLocationUpdates(locationCallback)
             stopSelf()
         }
-        else {
+        else if(intent !== null) {
             startForeground(NOTIFICATION_ID, createNotification())
+
+            locationCallback = object: LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult?) {
+                    super.onLocationResult(locationResult)
+                    if(locationResult == null) {
+                        return
+                    }
+                    val location = locationResult.lastLocation
+                    val targetLatitude = intent.getDoubleExtra("latitude", 0.0)
+                    val targetLongitude = intent.getDoubleExtra("longitude", 0.0)
+                    if(currentLocation.latitude != location.latitude || currentLocation.longitude != location.longitude) {
+                        currentLocation = location
+                        FirebaseFirestore.getInstance()
+                            .collection("etas")
+                            .document(documentId)
+                            .set(mapOf(
+                                "creator" to FirebaseAuth.getInstance().currentUser!!.uid,
+                                "location" to GeoPoint(location.latitude, location.longitude),
+                                "target" to GeoPoint(targetLatitude, targetLongitude),
+                                "updated" to FieldValue.serverTimestamp()
+                            ), SetOptions.merge())
+                    }
+                }
+            }
+
+            requestLocationUpdates()
         }
 
         return START_STICKY
