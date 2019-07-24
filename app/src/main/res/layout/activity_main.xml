@@ -6,5 +6,32 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainActivity">
+        tools:context=".MainActivity" android:background="@drawable/background_gradient" android:paddingTop="5dp"
+        android:paddingLeft="10dp" android:paddingRight="10dp" android:weightSum="1">
+    <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/progressBar_loading" android:indeterminate="true" tools:visibility="gone"/>
+    <AutoCompleteTextView
+            android:layout_width="match_parent"
+            android:layout_height="35dp" android:id="@+id/autoCompleteTextView_address"
+            android:background="@android:color/white" android:paddingLeft="5dp" android:textColor="#3F51B5"
+            android:textColorHighlight="#3F51B5" android:textColorLink="#3F51B5" android:textColorHint="#3F51B5"
+            android:hint="Address"/>
+    <CheckBox
+            android:text="Avoid Tolls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/checkBox_avoid_tolls" android:textColor="#FFFFFF"
+            android:textColorHint="#FFFFFF" android:textColorHighlight="#00FFFFFF" android:textColorLink="#00FFFFFF"
+            android:buttonTint="#FFFFFF" android:checked="false"/>
+    <Space
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_weight="1"/>
+    <Button
+            android:text="Start ETA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/button_start" android:backgroundTint="#FFFFFF"
+            android:textColor="#3F51B5" android:textColorHighlight="#3F51B5" android:textColorHint="#3F51B5"
+            android:textColorLink="#3F51B5" android:enabled="false"/>
 </LinearLayout>
