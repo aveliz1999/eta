@@ -1,37 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:orientation="vertical"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainActivity" android:background="@drawable/background_gradient" android:paddingTop="5dp"
-        android:paddingLeft="10dp" android:paddingRight="10dp" android:weightSum="1">
-    <ProgressBar
-            style="?android:attr/progressBarStyleHorizontal"
+        android:orientation="vertical"
+        tools:context=".MainActivity">
+
+    <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/progressBar_loading" android:indeterminate="true" tools:visibility="gone"/>
-    <AutoCompleteTextView
-            android:layout_width="match_parent"
-            android:layout_height="35dp" android:id="@+id/autoCompleteTextView_address"
-            android:background="@android:color/white" android:paddingLeft="5dp" android:textColor="#3F51B5"
-            android:textColorHighlight="#3F51B5" android:textColorLink="#3F51B5" android:textColorHint="#3F51B5"
-            android:hint="Address"/>
-    <CheckBox
-            android:text="Avoid Tolls"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:id="@+id/checkBox_avoid_tolls" android:textColor="#FFFFFF"
-            android:textColorHint="#FFFFFF" android:textColorHighlight="#00FFFFFF" android:textColorLink="#00FFFFFF"
-            android:buttonTint="#FFFFFF" android:checked="false"/>
-    <Space
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_weight="1"/>
-    <Button
-            android:text="Start ETA"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:id="@+id/button_start" android:backgroundTint="#FFFFFF"
-            android:textColor="#3F51B5" android:textColorHighlight="#3F51B5" android:textColorHint="#3F51B5"
-            android:textColorLink="#3F51B5" android:enabled="false"/>
-</LinearLayout>
+            android:layout_height="match_parent">
+
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/map"
+                tools:context=".MapsActivity"
+                android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="5dp"
+                android:background="@drawable/rounded_corners_background"
+                android:orientation="horizontal">
+
+            <ImageButton
+                    android:id="@+id/imageButton_history"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp"
+                    android:background="@null"
+                    app:srcCompat="@drawable/history" />
+
+            <MultiAutoCompleteTextView
+                    android:id="@+id/autocompleteTextView_search"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+            <ImageButton
+                    android:id="@+id/imageButton_favorites"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp"
+                    android:background="@null"
+                    app:srcCompat="@drawable/favorites" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>
