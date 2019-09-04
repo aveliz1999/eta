@@ -38,7 +38,7 @@
                     android:background="@null"
                     app:srcCompat="@drawable/history" />
 
-            <MultiAutoCompleteTextView
+            <AutoCompleteTextView
                     android:id="@+id/autocompleteTextView_search"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
