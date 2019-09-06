@@ -15,6 +15,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctions
 import com.veliz99.eta.MainActivity
 import com.veliz99.eta.R
 
@@ -41,6 +42,10 @@ class LocationService : Service() {
 
     private lateinit var documentId: String
     private var currentLocation: Location = Location("dummyprovider")
+
+    private val handler = Handler()
+
+    private var lastTimestamp = System.currentTimeMillis()
 
     override fun onCreate() {
         Log.i(TAG, "Location service created")
@@ -101,6 +106,11 @@ class LocationService : Service() {
                                 "target" to GeoPoint(targetLatitude, targetLongitude),
                                 "updated" to FieldValue.serverTimestamp()
                             ), SetOptions.merge())
+                    }
+                    if(System.currentTimeMillis() - lastTimestamp > 60000) {
+                        FirebaseFunctions.getInstance().getHttpsCallable("updateETA")
+                            .call(mapOf("id" to documentId))
+                        lastTimestamp = System.currentTimeMillis()
                     }
                 }
             }
