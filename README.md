@@ -8,3 +8,28 @@ The user can share their ETA code with others, who can then see the progress (bo
 * `cd eta`
 * Download your firebase project's google-services.json to the app/ directory
 * Build and sign the APK or bundle
+
+### Configuration
+* Have or create a [Firebase](https://firebase.google.com/) account
+* Set up [eta-functions](https://github.com/aveliz1999/eta-functions) with your Firebase account to handle distance and time calculations
+* Set up [eta-web](https://github.com/aveliz1999/eta-web) to share and display the ETAs in realtime
+* Go to your Firebase Remote Config options and add a parameter with key "eta_url" and the value is the location of your eta-web address with an ending `/`
+* Set your Firebase Firestore database rules to:
+```
+rules_version = '2';
+service cloud.firestore {
+    match /databases/{database}/documents {
+        match /etas/{eta} {
+            allow list: if false;
+            allow get: if true;
+            allow create: if request.resource.data.keys().size() == 4 &&
+                             request.resource.data.keys().hasAll(['creator', 'location', 'target', 'updated']) &&
+                             request.resource.data.creator == request.auth.uid &&
+                             request.resource.data.location is latlng &&
+                             request.resource.data.target is latlng &&
+                             request.resource.data.updated is timestamp &&
+                             request.resource.data.updated == request.time;
+        }
+    }
+}
+```
