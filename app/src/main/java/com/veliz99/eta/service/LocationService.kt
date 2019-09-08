@@ -43,9 +43,7 @@ class LocationService : Service() {
     private lateinit var documentId: String
     private var currentLocation: Location = Location("dummyprovider")
 
-    private val handler = Handler()
-
-    private var lastTimestamp = System.currentTimeMillis()
+    private var lastTimestamp = 0L
 
     override fun onCreate() {
         Log.i(TAG, "Location service created")
@@ -106,11 +104,13 @@ class LocationService : Service() {
                                 "target" to GeoPoint(targetLatitude, targetLongitude),
                                 "updated" to FieldValue.serverTimestamp()
                             ), SetOptions.merge())
-                    }
-                    if(System.currentTimeMillis() - lastTimestamp > 60000) {
-                        FirebaseFunctions.getInstance().getHttpsCallable("updateETA")
-                            .call(mapOf("id" to documentId))
-                        lastTimestamp = System.currentTimeMillis()
+                            .addOnSuccessListener {
+                                if(System.currentTimeMillis() - lastTimestamp > 60000) {
+                                    FirebaseFunctions.getInstance().getHttpsCallable("updateETA")
+                                        .call(mapOf("id" to documentId))
+                                    lastTimestamp = System.currentTimeMillis()
+                                }
+                            }
                     }
                 }
             }
