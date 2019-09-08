@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ETA</string>
+    <string name="website_path">https://eta.veliz99.com/</string>
 </resources>

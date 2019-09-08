@@ -49,14 +49,6 @@ class LocationService : Service() {
         Log.i(TAG, "Location service created")
         locationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        documentId = FirebaseFirestore.getInstance()
-            .collection("etas")
-            .document().id
-
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText(documentId, documentId)
-        clipboard.setPrimaryClip(clip)
-
         locationRequest = LocationRequest().apply {
             interval = 5000
             fastestInterval = 5000
@@ -83,6 +75,8 @@ class LocationService : Service() {
         }
         else if(intent !== null) {
             startForeground(NOTIFICATION_ID, createNotification())
+
+            documentId = intent.getStringExtra("document")!!
 
             locationCallback = object: LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult?) {

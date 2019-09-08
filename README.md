@@ -13,7 +13,7 @@ The user can share their ETA code with others, who can then see the progress (bo
 * Have or create a [Firebase](https://firebase.google.com/) account
 * Set up [eta-functions](https://github.com/aveliz1999/eta-functions) with your Firebase account to handle distance and time calculations
 * Set up [eta-web](https://github.com/aveliz1999/eta-web) to share and display the ETAs in realtime
-* Go to your Firebase Remote Config options and add a parameter with key "eta_url" and the value is the location of your eta-web address with an ending `/`
+* Change the `/res/values/strings.xml` value `website_path` to your eta-web url, ending with a `/`
 * Set your Firebase Firestore database rules to:
 ```
 rules_version = '2';
