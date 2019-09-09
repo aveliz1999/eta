@@ -1,9 +1,11 @@
 package com.veliz99.eta
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.net.Uri
@@ -13,14 +15,17 @@ import android.os.Bundle
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.veliz99.eta.adapter.AddressAdapter
 import com.veliz99.eta.service.LocationService
 import java.util.*
+
+const val LOCATION_PERMISSION_REQUEST = 13577
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +37,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            setupUi()
+        }
+        else{
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST)
+        }
+    }
+
+    private fun setupUi() {
         geocoder = Geocoder(this, Locale.getDefault())
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
@@ -147,5 +161,19 @@ class MainActivity : AppCompatActivity() {
             start()
         }
 
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,grantResults: IntArray) {
+        when(requestCode) {
+            LOCATION_PERMISSION_REQUEST -> {
+                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    setupUi()
+                }
+                else{
+                    Toast.makeText(this, "Location permission is required for this app to work!", Toast.LENGTH_LONG).show()
+                    finishAndRemoveTask()
+                }
+            }
+        }
     }
 }
