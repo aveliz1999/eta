@@ -8,13 +8,13 @@ import android.widget.BaseAdapter
 import android.widget.TextView
 import com.veliz99.eta.R
 
-class FavoritesAdapter(private val context: Context, private var items: List<Pair<String, String>>): BaseAdapter() {
+class FavoritesAdapter(private val context: Context, private var items: MutableList<Pair<String, String>>): BaseAdapter() {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         var convertView = convertView
         if(convertView == null) {
             val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            convertView = inflater.inflate(R.layout.view_address, parent, false)
+            convertView = inflater.inflate(R.layout.view_favorite, parent, false)
         }
 
         val item = getItem(position)
@@ -33,4 +33,10 @@ class FavoritesAdapter(private val context: Context, private var items: List<Pai
     override fun getItemId(position: Int): Long = position.toLong()
 
     override fun getCount(): Int = items.size
+
+    fun add(value: Pair<String, String>): Unit {
+        items.add(value)
+    }
+
+    fun getAllItems(): List<Pair<String, String>> = items
 }

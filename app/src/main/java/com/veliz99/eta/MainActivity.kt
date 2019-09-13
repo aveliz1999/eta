@@ -7,23 +7,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Address
-import android.location.Criteria
 import android.location.Geocoder
-import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.AutoCompleteTextView
-import android.widget.RelativeLayout
-import android.widget.Toast
+import android.view.ViewGroup
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.marginBottom
+import androidx.core.view.marginRight
+import androidx.core.view.setMargins
+import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
@@ -31,6 +29,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.veliz99.eta.adapter.AddressAdapter
+import com.veliz99.eta.adapter.FavoritesAdapter
 import com.veliz99.eta.service.LocationService
 import java.util.*
 
@@ -40,11 +39,15 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var map: GoogleMap
     lateinit var geocoder: Geocoder
-
+    lateinit var autoCompleteTextView: AutoCompleteTextView
+    lateinit var drawerLayout: DrawerLayout
+    lateinit var favoritesAdapter: FavoritesAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        drawerLayout = findViewById(R.id.drawerLayout_container)
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             setupUi()
@@ -52,6 +55,15 @@ class MainActivity : AppCompatActivity() {
         else{
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST)
         }
+
+        val preferences = getPreferences(Context.MODE_PRIVATE)
+        val favoriteAddresses = preferences.getStringSet("favorites", setOf())!!
+        val favorites = favoriteAddresses.map {
+            it to preferences.getString("address_${it}", "")!!
+        }.toMutableList()
+
+        favoritesAdapter = FavoritesAdapter(this, favorites)
+        findViewById<ListView>(R.id.listView_favorites).adapter = favoritesAdapter
     }
 
     private fun setupUi() {
@@ -81,16 +93,7 @@ class MainActivity : AppCompatActivity() {
 
             it.setOnMapLongClickListener {
                 val address = geocoder.getFromLocation(it.latitude, it.longitude, 1)[0] as Address
-                this@MainActivity.let {
-                    val a = AlertDialog.Builder(it, R.style.ThemeOverlay_AppCompat_Dialog)
-                        .setTitle("Confirm Location")
-                        .setMessage("Do you want to start navigating to " + address.getAddressLine(0) + "?")
-                        .setPositiveButton("Yes") { _, _ -> startService(address.latitude, address.longitude, true)}
-                        .setNeutralButton("Track Without Navigation") { _, _ -> startService(address.latitude, address.longitude, false)}
-                        .setNegativeButton("No") { _, _ -> }
-                        .create()
-                    a.show()
-                }
+                openAddressChoiceDialog(address.getAddressLine(0), address.latitude, address.longitude)
             }
         }
 
@@ -99,28 +102,57 @@ class MainActivity : AppCompatActivity() {
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
         }
 
-        val autocompleteTextView = findViewById<AutoCompleteTextView>(R.id.autocompleteTextView_search)
-        autocompleteTextView.setHorizontallyScrolling(true)
-        autocompleteTextView.apply {
+        autoCompleteTextView = findViewById<AutoCompleteTextView>(R.id.autocompleteTextView_search)
+        autoCompleteTextView.setHorizontallyScrolling(true)
+        autoCompleteTextView.apply {
             setAdapter(AddressAdapter(this@MainActivity))
             setOnItemClickListener { _, _, position, _ ->
                 val address =  (adapter.getItem(position) as Address)
                 setText(address.getAddressLine(0))
-                this@MainActivity.let {
-                    val a = AlertDialog.Builder(it, R.style.ThemeOverlay_AppCompat_Dialog)
-                        .setTitle("Confirm Location")
-                        .setMessage("Do you want to start navigating to " + address.getAddressLine(0) + "?")
-                        .setPositiveButton("Yes") { _, _ -> startService(address.latitude, address.longitude, true)}
-                        .setNeutralButton("Track Without Navigation") { _, _ -> startService(address.latitude, address.longitude, false)}
-                        .setNegativeButton("No") { _, _ -> setText("") }
-                        .create()
-                    a.show()
-                }
+                openAddressChoiceDialog(address.getAddressLine(0), address.latitude, address.longitude)
             }
         }
     }
 
-    private fun startService(lat: Double, long: Double, navigate: Boolean) {
+    private fun openAddressChoiceDialog(address: String, latitude: Double, longitude: Double) {
+        AlertDialog.Builder(this, R.style.ThemeOverlay_AppCompat_Dialog)
+            .setTitle("Confirm Location")
+            .setMessage("Do you want to start navigating to ${address}?")
+            .setPositiveButton("Yes") { _, _ -> startService(latitude, longitude)}
+            .setNeutralButton("Add To Favorites") { _, _ ->
+                createFavoriteDialog(address)
+            }
+            .setNegativeButton("No") { _, _ -> autoCompleteTextView.setText("") }
+            .create()
+            .show()
+    }
+
+    private fun createFavoriteDialog(address: String) {
+        val nameInputEditText = EditText(this)
+        nameInputEditText.layoutParams = (LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)).apply {
+            setMargins(R.attr.dialogPreferredPadding)
+        }
+
+        AlertDialog.Builder(this, R.style.ThemeOverlay_AppCompat_Dialog)
+            .setTitle("Add Favorite?")
+            .setMessage("What name should be used for ${address}?")
+            .setView(nameInputEditText)
+            .setPositiveButton("Add") { _, _ ->
+                favoritesAdapter.add(address to nameInputEditText.text.toString())
+                favoritesAdapter.notifyDataSetChanged()
+                getPreferences(Context.MODE_PRIVATE).edit().apply {
+                    putStringSet("favorites", favoritesAdapter.getAllItems().map{it.first}.toSet())
+                    putString("address_${address}", nameInputEditText.text.toString())
+                    apply()
+                }
+            }
+            .setNegativeButton("Cancel") { _, _ -> }
+            .create()
+            .show()
+        //TODO update adapter
+    }
+
+    private fun startService(lat: Double, long: Double) {
         fun start() {
             val etaDocumentId = FirebaseFirestore.getInstance()
                 .collection("etas")
@@ -138,36 +170,25 @@ class MainActivity : AppCompatActivity() {
                 startService(intent)
             }
 
-            if(navigate) {
-                val navigationUri = Uri.parse("google.navigation:q=$lat,$long")
-                val navigationIntent = Intent(Intent.ACTION_VIEW, navigationUri)
-                navigationIntent.`package` = "com.google.android.apps.maps"
-                if(navigationIntent.resolveActivity(packageManager) !== null) {
-                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText("documentId", "${getString(R.string.website_path)}${etaDocumentId}")
-                    clipboard.setPrimaryClip(clip)
-                    Toast.makeText(this, "Website URL copied to your clipboard", Toast.LENGTH_LONG).show()
-                    startActivity(navigationIntent)
-                }
-                else{
-                    this@MainActivity.let {
-                        val a = AlertDialog.Builder(it, R.style.ThemeOverlay_AppCompat_Dialog)
-                            .setTitle("Maps Missing")
-                            .setMessage("Cannot find the google maps app to launch navigation. Your location will still be tracked in the background.")
-                            .setNeutralButton("OK") { _, _ ->  }
-                            .create()
-                        a.show()
-                    }
-                }
+            val navigationUri = Uri.parse("google.navigation:q=$lat,$long")
+            val navigationIntent = Intent(Intent.ACTION_VIEW, navigationUri)
+            navigationIntent.`package` = "com.google.android.apps.maps"
+            if(navigationIntent.resolveActivity(packageManager) !== null) {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("documentId", "${getString(R.string.website_path)}${etaDocumentId}")
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "Website URL copied to your clipboard", Toast.LENGTH_LONG).show()
+                startActivity(navigationIntent)
             }
             else{
-                val sendIntent: Intent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, "${getString(R.string.website_path)}${etaDocumentId}")
-                    type = "text/plain"
+                this@MainActivity.let {
+                    val a = AlertDialog.Builder(it, R.style.ThemeOverlay_AppCompat_Dialog)
+                        .setTitle("Maps Missing")
+                        .setMessage("Cannot find the google maps app to launch navigation. Your location will still be tracked in the background.")
+                        .setNeutralButton("OK") { _, _ ->  }
+                        .create()
+                    a.show()
                 }
-                val shareIntent = Intent.createChooser(sendIntent, "Share ETA")
-                startActivityForResult(shareIntent, 0)
             }
         }
 
