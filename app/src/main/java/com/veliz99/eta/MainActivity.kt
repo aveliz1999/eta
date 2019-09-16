@@ -12,12 +12,14 @@ import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.core.view.marginRight
 import androidx.core.view.setMargins
 import androidx.drawerlayout.widget.DrawerLayout
@@ -50,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         drawerLayout = findViewById(R.id.drawerLayout_container)
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            setupUi()
+            setupLocationUi()
         }
         else{
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST)
@@ -64,9 +66,14 @@ class MainActivity : AppCompatActivity() {
 
         favoritesAdapter = FavoritesAdapter(this, favorites)
         findViewById<ListView>(R.id.listView_favorites).adapter = favoritesAdapter
+
+        val favoritesButton = findViewById<ImageButton>(R.id.imageButton_favorites)
+        favoritesButton.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.END)
+        }
     }
 
-    private fun setupUi() {
+    private fun setupLocationUi() {
         geocoder = Geocoder(this, Locale.getDefault())
         val locationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -149,7 +156,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel") { _, _ -> }
             .create()
             .show()
-        //TODO update adapter
     }
 
     private fun startService(lat: Double, long: Double) {
@@ -219,7 +225,7 @@ class MainActivity : AppCompatActivity() {
         when(requestCode) {
             LOCATION_PERMISSION_REQUEST -> {
                 if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    setupUi()
+                    setupLocationUi()
                 }
                 else{
                     Toast.makeText(this, "Location permission is required for this app to work!", Toast.LENGTH_LONG).show()
@@ -228,4 +234,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+
 }

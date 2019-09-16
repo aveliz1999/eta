@@ -63,7 +63,7 @@
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="start"
+            android:layout_gravity="end"
             android:background="#FFFFFF"
             android:orientation="horizontal"
             android:weightSum="3">
