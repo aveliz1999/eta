@@ -29,6 +29,12 @@ service cloud.firestore {
                              request.resource.data.target is latlng &&
                              request.resource.data.updated is timestamp &&
                              request.resource.data.updated == request.time;
+            allow update: if request.resource.data.keys().size() == 5 &&
+                             request.resource.data.keys().hasAll(['creator', 'location', 'target', 'updated', 'eta']) &&
+                             request.resource.data.creator == resource.data.creator &&
+                             request.resource.data.target == resource.data.target &&
+                             request.resource.data.updated == request.time &&
+                             request.resource.data.location is latlng;
         }
     }
 }
